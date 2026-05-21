@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Freediary Backend Endpoint Tester</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .section {
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            padding: 15px;
+        }
+        button {
+            margin: 5px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            cursor: pointer;
+        }
+        #result {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 10px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <h1>Freediary Backend Endpoint Tester</h1>
+
+    <div class="section">
+        <h2>Training Endpoints</h2>
+        <button onclick="getTrainings()">Get Trainings</button>
+        <button onclick="createTraining()">Create Training</button>
+        <button onclick="updateTraining()">Update Training</button>
+        <button onclick="deleteTraining()">Delete Training</button>
+    </div>
+
+    <div class="section">
+        <h2>Exercise Endpoints</h2>
+        <button onclick="getExercises()">Get Exercises</button>
+        <button onclick="createExercise()">Create Exercise</button>
+        <button onclick="updateExercise()">Update Exercise</button>
+        <button onclick="deleteExercise()">Delete Exercise</button>
+    </div>
+
+    <div class="section">
+        <h2>User Endpoints</h2>
+        <button onclick="registerUser()">Register User</button>
+        <button onclick="loginUser()">Login User</button>
+        <button onclick="getUserProfile()">Get User Profile</button>
+    </div>
+
+    <div class="section">
+        <h3>Result</h3>
+        <pre id="result">Results will be displayed here...</pre>
+    </div>
+
+    <script>
+        const BASE_URL = 'http://localhost:8000';  // Adjust if your backend runs on a different port
+
+async function makeRequest(url, method = 'GET', body = null) {
+    try {
+        const options = {
+            method,
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        };
+        
+        if (body) {
+            options.body = JSON.stringify(body);
+        }
+
+        const response = await fetch(url, options);
+        let result;
+        try {
+            result = await response.json();
+        } catch (e) {
+            result = { error: await response.text() };
+        }
+        
+        if (!response.ok) {
+            throw new Error(JSON.stringify({
+                status: response.status,
+                statusText: response.statusText,
+                ...result
+            }, null, 2));
+        }
+        
+        document.getElementById('result').textContent = JSON.stringify(result, null, 2);
+    } catch (error) {
+        document.getElementById('result').textContent = `Error: ${error.message}`;
+    }
+}
+
+        // Training Endpoints
+        function getTrainings() {
+            makeRequest(`${BASE_URL}/trainings`);
+        }
+
+        function createTraining() {
+            const sampleTraining = {
+                name: "Morning Workout",
+                description: "Full body strength training",
+                exercises: []
+            };
+            makeRequest(`${BASE_URL}/trainings`, 'POST', sampleTraining);
+        }
+
+        function updateTraining() {
+            const sampleTraining = {
+                id: 1,  // Replace with an actual ID
+                name: "Updated Morning Workout",
+                description: "Updated full body strength training"
+            };
+            makeRequest(`${BASE_URL}/trainings/1`, 'PUT', sampleTraining);
+        }
+
+        function deleteTraining() {
+            makeRequest(`${BASE_URL}/trainings/1`, 'DELETE');
+        }
+
+        // Exercise Endpoints
+        function getExercises() {
+            makeRequest(`${BASE_URL}/exercises`);
+        }
+
+        function createExercise() {
+            const sampleExercise = {
+                name: "Push-ups",
+                description: "Bodyweight chest exercise",
+                muscle_group: "Chest"
+            };
+            makeRequest(`${BASE_URL}/exercises`, 'POST', sampleExercise);
+        }
+
+        function updateExercise() {
+            const sampleExercise = {
+                id: 1,  // Replace with an actual ID
+                name: "Updated Push-ups",
+                description: "Updated bodyweight chest exercise"
+            };
+            makeRequest(`${BASE_URL}/exercises/1`, 'PUT', sampleExercise);
+        }
+
+        function deleteExercise() {
+            makeRequest(`${BASE_URL}/exercises/1`, 'DELETE');
+        }
+
+        // User Endpoints
+        function registerUser() {
+            const sampleUser = {
+                username: "testuser",
+                email: "test@example.com",
+                password: "test123"  // Changed to shorter password
+            };
+            makeRequest(`${BASE_URL}/auth/register`, 'POST', sampleUser);
+        }
+
+        function loginUser() {
+            const credentials = {
+                email: "test@example.com",
+                password: "test123"  // Updated to match the new password
+            };
+            makeRequest(`${BASE_URL}/auth/login`, 'POST', credentials);
+        }
+
+        function getUserProfile() {
+            makeRequest(`${BASE_URL}/users/me`);
+        }
+    </script>
+</body>
+</html>
