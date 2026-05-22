@@ -18,8 +18,8 @@ app.add_middleware(
         "*"                            # Временно разрешить все (только для тестов)
     ],
     allow_credentials=True,
-    allow_methods=["*"],               # Разрешить все HTTP методы
-    allow_headers=["*"],               # Разрешить все заголовки
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "x-session-id"],               # Разрешить все заголовки
 )
 
 app.include_router(auth_router)

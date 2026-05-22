@@ -12,26 +12,30 @@ class User:
 
 class Training:
     def __init__(self, user_id: int, type: str, date: date, difficulty: int, notes: Optional[str] = None,
-                 pool_training: Optional[dict] = None, depth_training: Optional[dict] = None, gym_training: Optional[dict] = None):
+                 poolTraining: Optional[dict] = None, depthTraining: Optional[dict] = None, gymTraining: Optional[dict] = None):
         self.id: int = 0  # Будем устанавливать при добавлении
         self.user_id = user_id
         self.type = type
         self.date = date
         self.difficulty = difficulty
         self.notes = notes
-        self.pool_training = pool_training
-        self.depth_training = depth_training
-        self.gym_training = gym_training
+        self.poolTraining = poolTraining
+        self.depthTraining = depthTraining
+        self.gymTraining = gymTraining
 
 class Exercise:
     def __init__(self, training_id: int, name: str, 
-                 reps: int, sets: int, weight: float):
+                 reps: Optional[int] = None, 
+                 sets: Optional[int] = None, 
+                 weight: Optional[float] = None,
+                 notes: Optional[str] = None):
         self.id: int = 0  # Будем устанавливать при добавлении
         self.training_id = training_id
         self.name = name
         self.reps = reps
         self.sets = sets
         self.weight = weight
+        self.notes = notes
 
 class Session:
     def __init__(self, session_id: str):
@@ -86,3 +90,9 @@ def cleanup_old_sessions(max_age_hours: int = 24):
     ]
     for session_id in expired_sessions:
         del sessions_db[session_id]
+
+def create_session_with_id(session_id: str) -> Session:
+    """Create a new session with a specific ID"""
+    session = Session(session_id)
+    sessions_db[session_id] = session
+    return session

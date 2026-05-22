@@ -1,6 +1,6 @@
-from typing import List
+from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Header
 
 from app.core.dependencies import get_current_user
 from app.crud.exercise import (
@@ -23,8 +23,10 @@ router = APIRouter(prefix="/exercises", tags=["exercises"])
 def create_training_exercise(
     exercise_data: ExerciseCreate,
     current_user: User = Depends(get_current_user),
+    x_session_id: Optional[str] = Header(None, alias="X-Session-ID")
 ):
-    training = get_training_by_id(exercise_data.training_id)
+
+    training = get_training_by_id(exercise_data.training_id, x_session_id)
 
     if training is None:
         raise HTTPException(
@@ -32,43 +34,23 @@ def create_training_exercise(
             detail="Training not found",
         )
 
-    if not is_training_owner(training_id=exercise_data.training_id, user_id=current_user.id):
+    if not is_training_owner(training_id=exercise_data.training_id, user_id=current_user.id, session_id=x_session_id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You can add exercises only to your own trainings",
         )
 
-    exercise = create_exercise(exercise_data)
-
+    # СОЗДАЁМ УПРАЖНЕНИЕ
+    exercise = create_exercise(exercise_data, x_session_id)
+    
     if exercise is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Exercise was not created",
         )
 
+    # ВОЗВРАЩАЕМ СОЗДАННОЕ УПРАЖНЕНИЕ
     return exercise
-
-
-@router.get("/training/{training_id}", response_model=List[ExerciseResponse])
-def get_training_exercises(
-    training_id: int,
-    current_user: User = Depends(get_current_user),
-):
-    training = get_training_by_id(training_id)
-
-    if training is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Training not found",
-        )
-
-    if not is_training_owner(training_id=training_id, user_id=current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You can view exercises only for your own trainings",
-        )
-
-    return get_exercises_by_training_id(training_id)
 
 
 @router.get("/{exercise_id}", response_model=ExerciseResponse)
@@ -91,6 +73,32 @@ def get_my_exercise(
         )
 
     return exercise
+
+@router.get("/training/{training_id}", response_model=List[ExerciseResponse])
+def get_training_exercises(
+    training_id: int,
+    current_user: User = Depends(get_current_user),
+    x_session_id: Optional[str] = Header(None, alias="X-Session-ID")
+):
+    training = get_training_by_id(training_id, x_session_id)
+    
+    if training is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Training not found",
+        )
+    
+    if not is_training_owner(
+        training_id=training_id, 
+        user_id=current_user.id, 
+        session_id=x_session_id
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can view exercises only for your own trainings",
+        )
+    
+    return get_exercises_by_training_id(training_id)
 
 
 @router.put("/{exercise_id}", response_model=ExerciseResponse)

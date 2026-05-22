@@ -9,6 +9,19 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { trainingAPI, exerciseAPI } from '../api';
 
+const mapTrainingTypeToAPI = (type: TrainingType): string => {
+  switch (type) {
+    case TrainingType.Pool:
+      return 'Pool';
+    case TrainingType.Depth:
+      return 'Depth';
+    case TrainingType.Gym:
+      return 'Gym';
+    default:
+      return 'Other';
+  }
+};
+
 const AddTrainingPage: React.FunctionComponent = () => {
   const navigate = useNavigate();
   const [trainingType, setTrainingType] = useState<TrainingType>(TrainingType.Pool);
@@ -125,8 +138,8 @@ const AddTrainingPage: React.FunctionComponent = () => {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  e.preventDefault();
+  
     if (!validateForm()) {
       return;
     }
@@ -140,8 +153,8 @@ const AddTrainingPage: React.FunctionComponent = () => {
       
       // Создаем базовый объект данных
       const trainingData: any = {
-        type: trainingType,
-        date: today.toISOString().split('T')[0], // Формат YYYY-MM-DD
+        type: mapTrainingTypeToAPI(trainingType),  // ← ИСПРАВЛЕНО
+        date: today.toISOString().split('T')[0],
         difficulty: difficulty,
       };
       
@@ -161,29 +174,35 @@ const AddTrainingPage: React.FunctionComponent = () => {
 
       // Создание тренировки
       const createdTraining = await trainingAPI.create(trainingData);
-      
+  
       // Создание упражнений
+
       const exercises = trainingType === TrainingType.Pool ? poolExercises :
-                       trainingType === TrainingType.Depth ? depthExercises :
-                       gymExercises;
-      
-      for (const exercise of exercises) {
-        const exerciseData = {
-          name: exercise.name,
-          reps: 'reps' in exercise ? exercise.reps : 1,
-          sets: 'sets' in exercise ? exercise.sets : 1,
-          weight: 0, // По умолчанию
-          notes: exercise.notes || undefined,
-          training_id: createdTraining.id,
-        };
-        await exerciseAPI.create(exerciseData);
+                    trainingType === TrainingType.Depth ? depthExercises :
+                    gymExercises;
+    
+      if (exercises.length > 0) {
+        
+        for (const exercise of exercises) {
+          const exerciseData = {
+            name: exercise.name,
+            reps: 'reps' in exercise ? exercise.reps : 1,
+            sets: 'sets' in exercise ? exercise.sets : 1,
+            weight: 0,
+            notes: exercise.notes || undefined,
+            training_id: createdTraining.id,
+          };
+        
+          await exerciseAPI.create(exerciseData);
+        }
+      } else {
       }
       
       navigate('/trainings');
     } catch (err: any) {
+      console.error('Error saving training:', err);
       let errorMessage = 'Не удалось сохранить тренировку. Попробуйте позже.';
       
-      // Пытаемся получить более детальную информацию об ошибке
       if (err.message && err.message.includes('422')) {
         errorMessage = 'Ошибка валидации данных. Проверьте правильность заполнения полей.';
       } else if (err.message && err.message.includes('401')) {
@@ -193,7 +212,6 @@ const AddTrainingPage: React.FunctionComponent = () => {
       }
       
       setSubmitError(errorMessage);
-      console.error('Error saving training:', err);
     } finally {
       setLoading(false);
     }

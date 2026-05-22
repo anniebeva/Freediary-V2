@@ -75,10 +75,12 @@ export const trainingAPI = {
   getById: (id: string) => fetchAPI<any>(`/trainings/${id}`),
   
   // Создать новую тренировку
-  create: (data: any) => fetchAPI<any>('/trainings/', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  }),
+  create: (data: any) => {
+    return fetchAPI<any>('/trainings', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
   
   // Обновить тренировку
   update: (id: string, data: any) => fetchAPI<any>(`/trainings/${id}`, {

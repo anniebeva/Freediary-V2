@@ -20,12 +20,12 @@ from app.crud.session_training import (
     delete_session_training,
     get_or_create_session,
 )
-from app.models.memory_storage import User
+from app.models.memory_storage import User, Session,  get_session, create_session_with_id
 from app.schemas.training import TrainingCreate, TrainingResponse, TrainingUpdate, TrainingWithExercises
-
 
 router = APIRouter(prefix="/trainings", tags=["trainings"])
 
+from fastapi import Request
 
 @router.post("/", response_model=TrainingResponse, status_code=status.HTTP_201_CREATED)
 def create_my_training(
@@ -33,12 +33,22 @@ def create_my_training(
     current_user: User = Depends(get_current_user),
     x_session_id: Optional[str] = Header(None, alias="X-Session-ID")
 ):
+    
     # If user is guest (id = 0) and session ID is provided, use session storage
     if current_user.id == 0 and x_session_id:
-        session_id = get_or_create_session(x_session_id)
-        training = create_session_training(session_id, training_data)
+        print(f"🔍 Гостевой пользователь, проверяем сессию: {x_session_id}")
+        
+        session = get_session(x_session_id)
+        
+        if session is None:
+            print(f"   ⚠️ Сессия НЕ найдена! Создаём с ID: {x_session_id}")
+            session = create_session_with_id(x_session_id)
+            print(f"   ✨ Создана новая сессия: {session.id}")
+        
+        training = create_session_training(session.id, training_data)
     else:
         # Regular user or guest without session ID
+        print(f"🔍 Обычный пользователь или нет session_id")
         training = create_training(training_data=training_data, user_id=current_user.id)
 
     if training is None:
@@ -48,6 +58,7 @@ def create_my_training(
         )
 
     return training
+
 
 
 @router.get("/", response_model=List[TrainingResponse])
@@ -82,9 +93,9 @@ def get_my_training(
                 "date": training.date,
                 "difficulty": training.difficulty,
                 "notes": training.notes,
-                "poolTraining": training.pool_training,
-                "depthTraining": training.depth_training,
-                "gymTraining": training.gym_training,
+                "poolTraining": training.poolTraining,
+                "depthTraining": training.depthTraining,
+                "gymTraining": training.gymTraining,
                 "exercises": [],  # Session trainings don't have exercises yet
             }
     
@@ -104,9 +115,9 @@ def get_my_training(
         "date": training.date,
         "difficulty": training.difficulty,
         "notes": training.notes,
-        "poolTraining": training.pool_training,
-        "depthTraining": training.depth_training,
-        "gymTraining": training.gym_training,
+        "poolTraining": training.poolTraining,
+        "depthTraining": training.depthTraining,
+        "gymTraining": training.gymTraining,
         "exercises": get_exercises_by_training_id(training_id),
     }
 

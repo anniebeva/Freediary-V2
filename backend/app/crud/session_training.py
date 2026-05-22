@@ -18,9 +18,9 @@ def create_session_training(session_id: str, training_data: TrainingCreate) -> O
         date=training_data.date,
         difficulty=training_data.difficulty,
         notes=training_data.notes,
-        pool_training=training_data.poolTraining,
-        depth_training=training_data.depthTraining,
-        gym_training=training_data.gymTraining,
+        poolTraining=training_data.poolTraining,
+        depthTraining=training_data.depthTraining,
+        gymTraining=training_data.gymTraining,
     )
     training.id = session.training_counter
     
@@ -58,9 +58,9 @@ def update_session_training(session_id: str, training_id: int, training_data: Tr
     training.date = training_data.date
     training.difficulty = training_data.difficulty
     training.notes = training_data.notes
-    training.pool_training = training_data.poolTraining
-    training.depth_training = training_data.depthTraining
-    training.gym_training = training_data.gymTraining
+    training.poolTraining = training_data.poolTraining
+    training.depthTraining = training_data.depthTraining
+    training.gymTraining = training_data.gymTraining
     
     return training
 
