@@ -23,8 +23,9 @@ const HomePage: React.FunctionComponent = () => {
         id: training.id.toString(),
         date: new Date(training.date),
       }));
-      // Показываем последние 3 тренировки
-      setRecentTrainings(formattedTrainings.slice(0, 3));
+      // Сортируем по дате (новые сверху) и показываем последние 3 тренировки
+      const sortedTrainings = formattedTrainings.sort((a, b) => b.date.getTime() - a.date.getTime());
+      setRecentTrainings(sortedTrainings.slice(0, 3));
     } catch (err) {
       setError('Не удалось загрузить тренировки. Попробуйте позже.');
       console.error('Error fetching trainings:', err);

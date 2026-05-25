@@ -19,9 +19,9 @@ def parse_date(date_input: Union[str, date]) -> date:
 def get_trainings(db: Session, user_id: int, session_id: Optional[str] = None) -> List[Union[Training, SessionTraining]]:
     """Получить тренировки в зависимости от типа пользователя"""
     if user_id > 0:
-        return db.query(Training).filter(Training.user_id == user_id).all()
+        return db.query(Training).filter(Training.user_id == user_id).order_by(Training.date.desc()).all()
     elif user_id == 0 and session_id:
-        return db.query(SessionTraining).filter(SessionTraining.session_id == session_id).all()
+        return db.query(SessionTraining).filter(SessionTraining.session_id == session_id).order_by(SessionTraining.date.desc()).all()
     else:
         return []
 

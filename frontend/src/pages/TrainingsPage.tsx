@@ -24,7 +24,9 @@ const TrainingsPage: React.FunctionComponent = () => {
         id: training.id.toString(),
         date: new Date(training.date),
       }));
-      setTrainings(formattedTrainings);
+      // Дополнительная сортировка на фронтенде для страховки
+      const sortedTrainings = formattedTrainings.sort((a, b) => b.date.getTime() - a.date.getTime());
+      setTrainings(sortedTrainings);
     } catch (err) {
       setError('Не удалось загрузить тренировки. Попробуйте позже.');
       console.error('Error fetching trainings:', err);
