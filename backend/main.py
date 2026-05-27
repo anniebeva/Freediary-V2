@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
 from sqlalchemy.orm import Session
 
 from app.database import get_db, create_tables
@@ -8,8 +9,12 @@ from app.routes.exercises import router as exercises_router
 from app.routes.trainings import router as trainings_router
 from app.crud.session_cleanup import cleanup_expired_sessions
 from app.core.config import settings
+from app.core.exceptions import validation_exception_handler
 
 app = FastAPI()
+
+# Register global exception handler for validation errors
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
 # Создание таблиц при запуске приложения
 @app.on_event("startup")
@@ -116,6 +121,8 @@ def custom_openapi():
     return app.openapi_schema
 
 app.openapi = custom_openapi
+
+
 
 if __name__ == "__main__":
     import uvicorn
