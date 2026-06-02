@@ -1,9 +1,13 @@
-from fastapi import FastAPI, Depends, BackgroundTasks
+from fastapi import FastAPI, Depends, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 import asyncio
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
 from app.database import get_db, create_tables
 from app.routes.auth import router as auth_router
@@ -19,6 +23,12 @@ import io
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 app = FastAPI()
+
+# Настройка rate limiting
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 # Регистрируем глобальный обработчик для ошибок валидации
 def validation_exception_handler(request, exc):
@@ -48,6 +58,9 @@ async def on_startup():
         print("Telegram bot startup timeout - continuing without bot")
     except Exception as e:
         print(f"Telegram bot not available: {e}")
+    
+    # Запускаем фоновую задачу для очистки сессий
+    asyncio.create_task(cleanup_sessions_task())
 
 @app.on_event("shutdown")
 async def on_shutdown():
@@ -152,6 +165,25 @@ def custom_openapi():
     return app.openapi_schema
 
 app.openapi = custom_openapi
+
+
+async def cleanup_sessions_task():
+    """Фоновая задача для очистки просроченных сессий каждые 6 часов"""
+    from app.database import get_db
+    from app.crud.session_cleanup import cleanup_expired_sessions
+    
+    while True:
+        try:
+            # Ждем 6 часов
+            await asyncio.sleep(6 * 60 * 60)  # 6 часов в секундах
+            
+            # Очищаем сессии
+            db = next(get_db())
+            deleted_count = cleanup_expired_sessions(db)
+            print(f"Автоматически очищено {deleted_count} просроченных сессий")
+            
+        except Exception as e:
+            print(f"Ошибка при автоматической очистке сессий: {e}")
 
 
 if __name__ == "__main__":

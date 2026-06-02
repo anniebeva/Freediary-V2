@@ -31,25 +31,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Инициализация sessionId для гостевых пользователей
   useEffect(() => {
     const initializeAuth = async () => {
-      const token = localStorage.getItem('token');
-      
-      if (token) {
-        try {
-          const userData = await authAPI.getMe();
-          setUser(userData);
-          setIsAuthenticated(true);
-        } catch (error) {
-          console.error('Token validation failed:', error);
-          localStorage.removeItem('token');
-          // Создаем sessionId для гостя
-          let sessionId = localStorage.getItem('sessionId');
-          if (!sessionId) {
-            sessionId = 'guest_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-            localStorage.setItem('sessionId', sessionId);
-          }
-        }
-      } else {
-        // Если пользователь не авторизован, создаем или получаем sessionId
+      try {
+        const userData = await authAPI.getMe();
+        setUser(userData);
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error('User not authenticated:', error);
+        // Создаем sessionId для гостя
         let sessionId = localStorage.getItem('sessionId');
         if (!sessionId) {
           sessionId = 'guest_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
@@ -66,16 +54,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await authAPI.login({ email, password });
       
-      // Бэкенд возвращает access_token
-      const token = response.access_token;
-      
-      if (!token) {
-        throw new Error('Token not received');
-      }
-      
-      // Сохраняем токен
-      localStorage.setItem('token', token);
-      
+      // Токен теперь хранится в httpOnly cookie, не нужно сохранять в localStorage
       // Получаем данные пользователя
       const userData = await authAPI.getMe();
       
@@ -102,26 +81,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = () => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      authAPI.logout().catch(console.error);
-    }
+  // Всегда вызываем logout API для удаления cookie на сервере
+    authAPI.logout().catch(console.error);
     
     setUser(null);
     setIsAuthenticated(false);
-    localStorage.removeItem('token');
     
     // Создаем новую сессию для гостя
     const sessionId = 'guest_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     localStorage.setItem('sessionId', sessionId);
+    
+    // 👇 ДОБАВИТЬ РЕДИРЕКТ НА СТРАНИЦУ ВХОДА
+    window.location.href = '/login';
   };
 
   const getCurrentUser = async (): Promise<User | null> => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        return null;
-      }
       return await authAPI.getMe();
     } catch (error) {
       console.error('Error getting current user:', error);

@@ -2,7 +2,6 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-// Навигационное меню с водной тематикой
 const Navigation: React.FunctionComponent = () => {
   const { isAuthenticated, user, logout } = useAuth();
 

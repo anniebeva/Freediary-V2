@@ -1,22 +1,26 @@
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, HTTPException, status, Request
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 from typing import Optional
 
-from app.core.security import verify_password, create_access_token
 from app.core.config import settings
 from app.crud.user import get_user_by_id
 from app.models.models import User, UserRole
 from app.database import get_db 
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
+def get_token_from_cookie(request: Request) -> Optional[str]:
+    """Получить токен из cookie (вместо Authorization header)"""
+    return request.cookies.get(settings.JWT_COOKIE_NAME)
+
 
 def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    request: Request,
     db: Session = Depends(get_db)
 ) -> Optional[User]:
+    # Читаем токен из cookie, а не из заголовка
+    token = get_token_from_cookie(request)
+    
     if not token:
         return None
     
@@ -31,7 +35,9 @@ def get_current_user(
     return get_user_by_id(db, int(user_id))
 
 
-def get_current_active_user(current_user: Optional[User] = Depends(get_current_user)):
+def get_current_active_user(
+    current_user: Optional[User] = Depends(get_current_user)
+) -> User:
     if current_user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -41,9 +47,10 @@ def get_current_active_user(current_user: Optional[User] = Depends(get_current_u
     return current_user
 
 
-def is_admin_user(current_user: User = Depends(get_current_active_user)):
-    # Получаем значение роли из объекта SQLAlchemy
-    user_role = str(current_user.role)
+def is_admin_user(
+    current_user: User = Depends(get_current_active_user)
+) -> User:
+    user_role = getattr(current_user, 'role', 'user')
     if user_role != UserRole.ADMIN.value:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

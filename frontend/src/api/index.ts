@@ -1,10 +1,5 @@
 const API_BASE_URL = 'http://localhost:8000';
 
-// Получение токена из localStorage
-const getAuthToken = (): string | null => {
-  return localStorage.getItem('token');
-};
-
 // Получение session ID для гостевых пользователей
 const getSessionId = (): string | null => {
   return localStorage.getItem('sessionId');
@@ -17,22 +12,20 @@ async function fetchAPI<T>(
 ): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
   
-  const token = getAuthToken();
   const sessionId = getSessionId();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...options.headers as Record<string, string>,
   };
 
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  } else if (sessionId) {
+  if (sessionId) {
     // Для гостевых пользователей добавляем session ID
     headers['X-Session-ID'] = sessionId;
   }
 
   const defaultOptions: RequestInit = {
     headers,
+    credentials: 'include', // Включаем отправку cookie
   };
 
   try {
@@ -52,10 +45,6 @@ async function fetchAPI<T>(
           errorMessage = 'Неверные данные';
           break;
         case 401:
-          // Очищаем токен при 401
-          localStorage.removeItem('token');
-          localStorage.removeItem('isAuthenticated');
-          localStorage.removeItem('user');
           errorMessage = 'Необходима авторизация';
           break;
         case 403:
