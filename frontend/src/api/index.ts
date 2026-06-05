@@ -96,7 +96,7 @@ export const trainingAPI = {
   getAll: () => fetchAPI<any[]>('/trainings/'),
   getById: (id: string) => fetchAPI<any>(`/trainings/${id}`),
   create: (data: any) => {
-    return fetchAPI<any>('/trainings', {
+    return fetchAPI<any>('/trainings/', {  // 👈 ИСПРАВЛЕНО
       method: 'POST',
       body: JSON.stringify(data),
     });
