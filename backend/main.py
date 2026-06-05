@@ -187,7 +187,7 @@ async def cleanup_sessions_task():
             deleted_count = cleanup_expired_sessions(db)
             print(f"Автоматически очищено {deleted_count} просроченных сессий")
         except Exception as e:
-            print(f"Ошибка при автоматической очистке сессий: {e}")
+            print(f"Ошибка при автоматической очистке сессий ошибка: {e}")
 
 if __name__ == "__main__":
     import uvicorn
