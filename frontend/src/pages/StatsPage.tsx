@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { trainingAPI } from '../api';
-import { TrainingType } from '../types/Training';
 
 interface Training {
   id: number;
