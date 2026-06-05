@@ -14,26 +14,28 @@ def get_token_from_cookie(request: Request) -> Optional[str]:
     return request.cookies.get(settings.JWT_COOKIE_NAME)
 
 
-def get_current_user(
-    request: Request,
-    db: Session = Depends(get_db)
-) -> Optional[User]:
-    # Читаем токен из cookie, а не из заголовка
-    token = get_token_from_cookie(request)
+def get_current_user(request: Request, db: Session = Depends(get_db)):
+    token = request.cookies.get(settings.JWT_COOKIE_NAME)
+    print(f"🔍 Token from cookie: {token[:20] if token else 'None'}...")
     
     if not token:
+        print("❌ No token")
         return None
     
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         user_id = payload.get("sub")
+        print(f"🔍 User ID from token: {user_id}")
+        
         if user_id is None:
             return None
-    except JWTError:
+            
+        user = get_user_by_id(db, int(user_id))
+        print(f"🔍 User found: {user is not None}")
+        return user
+    except JWTError as e:
+        print(f"❌ JWT Error: {e}")
         return None
-    
-    return get_user_by_id(db, int(user_id))
-
 
 def get_current_active_user(
     current_user: Optional[User] = Depends(get_current_user)

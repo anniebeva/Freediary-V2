@@ -47,7 +47,7 @@ def register(
 @router.post("/login", response_model=Token)
 @limiter.limit("5/minute")
 def login(
-    request: Request,  # 👈 ДОБАВИТЬ
+    request: Request,  
     credentials: UserLogin,
     response: Response,
     background_tasks: BackgroundTasks,
@@ -82,6 +82,7 @@ def login(
         user_id = getattr(user, 'id', 0)
         background_tasks.add_task(notify_login, user_id)
     
+    print(f"🔑 SECRET_KEY used for signing: {settings.SECRET_KEY[:10]}...")
     return Token(access_token=access_token)
 
 
@@ -102,4 +103,9 @@ def logout(response: Response):
 def get_me(
     current_user: User = Depends(get_current_user)
 ):
+    if current_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated"
+        )
     return current_user
