@@ -52,10 +52,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await authAPI.login({ email, password });
+      await authAPI.login({ email, password });
       
-      // Токен теперь хранится в httpOnly cookie, не нужно сохранять в localStorage
-      // Получаем данные пользователя
       const userData = await authAPI.getMe();
       
       setUser(userData);

@@ -13,7 +13,7 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({
   requireAuth = true,
   redirectTo = requireAuth ? '/login' : '/trainings'
 }) => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();  
   const location = useLocation();
 
   // Если требуется авторизация, но пользователь не авторизован - редирект на логин
