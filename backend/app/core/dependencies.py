@@ -15,27 +15,27 @@ def get_token_from_cookie(request: Request) -> Optional[str]:
 
 
 def get_current_user(request: Request, db: Session = Depends(get_db)):
+    # 1. Пробуем взять токен из cookie
     token = request.cookies.get(settings.JWT_COOKIE_NAME)
-    print(f"🔍 Token from cookie: {token[:20] if token else 'None'}...")
+    
+    # 2. Если нет — пробуем из заголовка Authorization
+    if not token:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header[7:]
     
     if not token:
-        print("❌ No token")
         return None
     
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         user_id = payload.get("sub")
-        print(f"🔍 User ID from token: {user_id}")
-        
         if user_id is None:
             return None
-            
-        user = get_user_by_id(db, int(user_id))
-        print(f"🔍 User found: {user is not None}")
-        return user
-    except JWTError as e:
-        print(f"❌ JWT Error: {e}")
+    except JWTError:
         return None
+    
+    return get_user_by_id(db, int(user_id))
 
 def get_current_active_user(
     current_user: Optional[User] = Depends(get_current_user)

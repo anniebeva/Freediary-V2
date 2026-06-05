@@ -1,5 +1,10 @@
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
+// Получение токена из localStorage
+const getToken = (): string | null => {
+  return localStorage.getItem('token');
+};
+
 // Получение session ID для гостевых пользователей
 const getSessionId = (): string | null => {
   return localStorage.getItem('sessionId');
@@ -12,26 +17,28 @@ async function fetchAPI<T>(
 ): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
   
+  const token = getToken();
   const sessionId = getSessionId();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...options.headers as Record<string, string>,
   };
 
-  if (sessionId) {
+  // 👇 Добавляем токен в заголовок, если он есть
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  } else if (sessionId) {
     // Для гостевых пользователей добавляем session ID
     headers['X-Session-ID'] = sessionId;
   }
 
   const defaultOptions: RequestInit = {
     headers,
-    credentials: 'include', // Включаем отправку cookie
   };
 
   try {
     const response = await fetch(url, { ...defaultOptions, ...options });
     
-    // 👇 ДОБАВЬ ЭТУ ПРОВЕРКУ (ОБРАБОТКА ПУСТОГО ОТВЕТА 204)
     if (response.status === 204) {
       return {} as T;
     }
@@ -39,7 +46,6 @@ async function fetchAPI<T>(
     if (!response.ok) {
       let errorMessage = '';
       
-      // Обработка ошибок по статусу
       switch (response.status) {
         case 400:
           errorMessage = 'Неверные данные';
@@ -60,7 +66,6 @@ async function fetchAPI<T>(
           errorMessage = `HTTP error! status: ${response.status}`;
       }
       
-      // Пытаемся получить детальную информацию об ошибке из ответа
       try {
         const errorData = await response.json();
         if (errorData.detail) {
@@ -88,27 +93,18 @@ async function fetchAPI<T>(
 
 // Тренировки
 export const trainingAPI = {
-  // Получить все тренировки
   getAll: () => fetchAPI<any[]>('/trainings/'),
-  
-  // Получить тренировку по ID
   getById: (id: string) => fetchAPI<any>(`/trainings/${id}`),
-  
-  // Создать новую тренировку
   create: (data: any) => {
     return fetchAPI<any>('/trainings', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   },
-  
-  // Обновить тренировку
   update: (id: string, data: any) => fetchAPI<any>(`/trainings/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   }),
-  
-  // Удалить тренировку
   delete: (id: string) => fetchAPI<void>(`/trainings/${id}`, {
     method: 'DELETE',
   }),
@@ -116,22 +112,15 @@ export const trainingAPI = {
 
 // Упражнения
 export const exerciseAPI = {
-  // Получить упражнения для тренировки
   getByTraining: (trainingId: string) => fetchAPI<any[]>(`/exercises/training/${trainingId}`),
-  
-  // Создать упражнение
   create: (data: any) => fetchAPI<any>('/exercises/', {
     method: 'POST',
     body: JSON.stringify(data),
   }),
-  
-  // Обновить упражнение
   update: (id: string, data: any) => fetchAPI<any>(`/exercises/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   }),
-  
-  // Удалить упражнение
   delete: (id: string) => fetchAPI<void>(`/exercises/${id}`, {
     method: 'DELETE',
   }),
@@ -150,32 +139,23 @@ export const authAPI = {
   logout: () => fetchAPI<void>('/auth/logout', {
     method: 'POST',
   }),
-  getMe: () => fetchAPI<any>('/auth/me'),  // 👈 добавить эту строку
+  getMe: () => fetchAPI<any>('/auth/me'),
 };
 
 // Telegram API
 export const telegramAPI = {
-  // Получить статус Telegram
   getStatus: () => fetchAPI<any>('/users/me/telegram/status'),
-  
-  // Сгенерировать ссылку для привязки
   generateLink: () => fetchAPI<any>('/users/me/telegram/link', {
     method: 'POST',
     body: JSON.stringify({}),
   }),
-  
-  // Отвязать Telegram
   unlink: () => fetchAPI<any>('/users/me/telegram/unlink', {
     method: 'DELETE',
   }),
-  
-  // Отправить тестовое уведомление
   sendTestNotification: () => fetchAPI<any>('/users/me/telegram/test', {
     method: 'POST',
     body: JSON.stringify({}),
   }),
-  
-  // Обновить настройки уведомлений
   updateSettings: (enabled: boolean) => fetchAPI<any>('/users/me/telegram/settings', {
     method: 'PUT',
     body: JSON.stringify({

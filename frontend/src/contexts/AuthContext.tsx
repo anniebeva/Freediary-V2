@@ -52,14 +52,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string) => {
     try {
-      await authAPI.login({ email, password });
+      const response = await authAPI.login({ email, password });
+      const token = response.access_token;
+      
+      if (token) {
+        localStorage.setItem('token', token);
+      }
       
       const userData = await authAPI.getMe();
-      
       setUser(userData);
       setIsAuthenticated(true);
-      
-      // Удаляем sessionId при успешной авторизации
       localStorage.removeItem('sessionId');
     } catch (error) {
       console.error('Login failed:', error);
@@ -79,17 +81,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = () => {
-  // Всегда вызываем logout API для удаления cookie на сервере
-    authAPI.logout().catch(console.error);
-    
+  // Очищаем локальное состояние
     setUser(null);
     setIsAuthenticated(false);
+    
+    // Удаляем токен из localStorage
+    localStorage.removeItem('token');
     
     // Создаем новую сессию для гостя
     const sessionId = 'guest_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     localStorage.setItem('sessionId', sessionId);
     
-    // 👇 ДОБАВИТЬ РЕДИРЕКТ НА СТРАНИЦУ ВХОДА
+    // Редирект на страницу входа
     window.location.href = '/login';
   };
 
