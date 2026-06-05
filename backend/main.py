@@ -1,13 +1,14 @@
 from fastapi import FastAPI, Depends, BackgroundTasks, Request
+from fastapi.responses import Response, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 import asyncio
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.database import get_db, create_tables
 from app.routes.auth import router as auth_router
@@ -24,7 +25,29 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 app = FastAPI()
 
-# Настройка rate limiting
+class LogCORSMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        print(f"CORS Headers: {response.headers.get('access-control-allow-origin')}")
+        return response
+
+# 1. CORS middleware (первым!)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://freediary-ai-version.vercel.app",
+        "http://localhost:3000",
+    ],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Session-ID"],
+    expose_headers=["*"],
+)
+
+# 2. Logging middleware
+app.add_middleware(LogCORSMiddleware)
+
+# 3. Rate limiting
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -51,7 +74,6 @@ async def on_startup():
     
     print("Starting Telegram bot...")
     try:
-        # Даём боту 5 секунд на подключение
         await asyncio.wait_for(bot_handler.start_bot(), timeout=5)
         print("Telegram bot started!")
     except asyncio.TimeoutError:
@@ -59,51 +81,41 @@ async def on_startup():
     except Exception as e:
         print(f"Telegram bot not available: {e}")
     
-    # Запускаем фоновую задачу для очистки сессий
     asyncio.create_task(cleanup_sessions_task())
 
 @app.on_event("shutdown")
 async def on_shutdown():
-    """Остановка Telegram бота"""
     await bot_handler.stop_bot()
-
-# Настройка CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # временно разрешаем все источники
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 app.include_router(auth_router)
 app.include_router(trainings_router)
 app.include_router(exercises_router)
 app.include_router(telegram_router)
 
+# 4. Preflight handler для CORS
+@app.options("/{rest_of_path:path}")
+async def preflight_handler(request: Request):
+    response = Response()
+    response.headers["Access-Control-Allow-Origin"] = "https://freediary-ai-version.vercel.app"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Session-ID"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    return response
 
+# 5. Обычные эндпоинты
 @app.get("/")
 def read_root():
     return {"message": "Welcome to FreeDiary API"}
 
-
 @app.get("/health")
 def health_check():
-    """Проверка работоспособности API"""
     return {"status": "healthy", "database": "SQLite"}
-
 
 @app.post("/cleanup-sessions")
 def cleanup_sessions(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
-    """
-    Очистить просроченные сессии
-    
-    Этот эндпоинт можно вызывать периодически для очистки старых сессий.
-    В продакшене рекомендуется настроить cron-задачу.
-    """
     def cleanup_task():
         deleted_count = cleanup_expired_sessions(db)
         print(f"Очищено {deleted_count} просроченных сессий")
@@ -111,10 +123,8 @@ def cleanup_sessions(
     background_tasks.add_task(cleanup_task)
     return {"message": "Задача очистки сессий запущена в фоновом режиме"}
 
-
 @app.get("/db-info")
 def get_database_info(db: Session = Depends(get_db)):
-    """Получить информацию о состоянии базы данных"""
     from app.models.models import User, Training, Exercise, SessionTracking, SessionTraining, SessionExercise
     
     user_count = db.query(User).count()
@@ -166,25 +176,18 @@ def custom_openapi():
 
 app.openapi = custom_openapi
 
-
 async def cleanup_sessions_task():
-    """Фоновая задача для очистки просроченных сессий каждые 6 часов"""
     from app.database import get_db
     from app.crud.session_cleanup import cleanup_expired_sessions
     
     while True:
         try:
-            # Ждем 6 часов
-            await asyncio.sleep(6 * 60 * 60)  # 6 часов в секундах
-            
-            # Очищаем сессии
+            await asyncio.sleep(6 * 60 * 60)
             db = next(get_db())
             deleted_count = cleanup_expired_sessions(db)
             print(f"Автоматически очищено {deleted_count} просроченных сессий")
-            
         except Exception as e:
             print(f"Ошибка при автоматической очистке сессий: {e}")
-
 
 if __name__ == "__main__":
     import uvicorn
