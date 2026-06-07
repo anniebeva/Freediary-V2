@@ -14,7 +14,7 @@ from app.crud.training import (
 )
 from app.crud.exercise import get_exercises_by_training_id
 from app.schemas.training import TrainingCreate, TrainingResponse, TrainingUpdate, TrainingWithExercises
-from app.models.models import User, UserRole
+from app.models.models import User
 from app.bot.notifications import notify_training_created, notify_training_deleted
 from app.core.logging import log_business_event
 

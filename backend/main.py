@@ -8,7 +8,6 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
-from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.database import get_db, create_tables
 from app.routes.auth import router as auth_router
@@ -16,7 +15,6 @@ from app.routes.exercises import router as exercises_router
 from app.routes.trainings import router as trainings_router
 from app.routes.telegram import router as telegram_router
 from app.crud.session_cleanup import cleanup_expired_sessions
-from app.core.config import settings
 from app.bot.handler import TelegramBotHandler
 from app.core.logging import setup_logging
 from app.core.middleware import RequestLoggingMiddleware
@@ -50,7 +48,7 @@ app.add_middleware(
 # 3. Rate limiting
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
 app.add_middleware(SlowAPIMiddleware)
 
 # Регистрируем глобальный обработчик для ошибок валидации

@@ -15,12 +15,18 @@ class JSONFormatter(logging.Formatter):
         log_data: Dict[str, Any] = {
             "timestamp": datetime.fromtimestamp(record.created).isoformat(),
             "level": record.levelname,
-            "message": record.getMessage(),
             "logger": record.name,
             "module": record.module,
             "function": record.funcName,
             "line": record.lineno,
         }
+        
+        # Add message (can be string or dict)
+        if isinstance(record.msg, dict):
+            for key, value in record.msg.items():
+                log_data[key] = value
+        else:
+            log_data["message"] = record.getMessage()
         
         # Add exception info if present
         if record.exc_info:
@@ -30,12 +36,11 @@ class JSONFormatter(logging.Formatter):
                 "traceback": traceback.format_exception(*record.exc_info)
             }
         
-        return json.dumps(log_data, ensure_ascii=False)
+        return json.dumps(log_data, ensure_ascii=False, default=str)
 
 
 def setup_logging():
     """Configure application logging"""
-    # Create logger
     logger = logging.getLogger("freediary")
     logger.setLevel(logging.INFO)
     
@@ -53,14 +58,12 @@ def setup_logging():
     # Add handler to logger
     logger.addHandler(console_handler)
     
-    # Set logging for uvicorn
-    uvicorn_logger = logging.getLogger("uvicorn")
-    uvicorn_logger.handlers.clear()
-    uvicorn_logger.addHandler(console_handler)
-    
-    uvicorn_access_logger = logging.getLogger("uvicorn.access")
-    uvicorn_access_logger.handlers.clear()
-    uvicorn_access_logger.addHandler(console_handler)
+    # Configure uvicorn loggers
+    for log_name in ["uvicorn", "uvicorn.access", "uvicorn.error"]:
+        uvicorn_logger = logging.getLogger(log_name)
+        uvicorn_logger.handlers.clear()
+        uvicorn_logger.addHandler(console_handler)
+        uvicorn_logger.propagate = False
     
     return logger
 
@@ -72,15 +75,12 @@ def get_logger(name: str = "freediary") -> logging.Logger:
 
 def log_request(request: Request, response: Response, process_time: float):
     """Log HTTP request details"""
-    logger = get_logger("freediary.request")
+    logger = get_logger("freediary")
     
-    # Get client IP
     client_ip = request.client.host if request.client else "unknown"
-    
-    # Get user agent
     user_agent = request.headers.get("user-agent", "unknown")
     
-    log_data = {
+    logger.info({
         "type": "http_request",
         "method": request.method,
         "url": str(request.url),
@@ -88,16 +88,14 @@ def log_request(request: Request, response: Response, process_time: float):
         "process_time_ms": round(process_time * 1000, 2),
         "client_ip": client_ip,
         "user_agent": user_agent,
-    }
-    
-    logger.info("HTTP request processed", extra=log_data)
+    })
 
 
 def log_error(error: Exception, context: Optional[Dict[str, Any]] = None):
     """Log application error with context"""
-    logger = get_logger("freediary.error")
+    logger = get_logger("freediary")
     
-    error_data = {
+    error_data: Dict[str, Any] = {
         "type": "application_error",
         "error_type": error.__class__.__name__,
         "error_message": str(error),
@@ -107,17 +105,19 @@ def log_error(error: Exception, context: Optional[Dict[str, Any]] = None):
     if context:
         error_data["context"] = context
     
-    logger.error("Application error occurred", extra=error_data)
+    logger.error(error_data)
 
 
 def log_business_event(event_type: str, event_data: Dict[str, Any]):
     """Log business event"""
-    logger = get_logger("freediary.business")
+    logger = get_logger("freediary")
     
-    log_data = {
-        "type": f"business_{event_type}",
-        "timestamp": datetime.now().isoformat(),
-        **event_data
+    log_data: Dict[str, Any] = {
+        "type": "business_event",
+        "business_event": event_type,
     }
     
-    logger.info(f"Business event: {event_type}", extra=log_data)
+    for key, value in event_data.items():
+        log_data[key] = value
+    
+    logger.info(log_data)

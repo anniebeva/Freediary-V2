@@ -88,9 +88,13 @@ def login(
 
     telegram_id = getattr(user, 'telegram_id', None)
     notifications_enabled = getattr(user, 'telegram_notifications_enabled', False)
-    
+    user_id = getattr(user, 'id', 0)
+
+    if telegram_id and notifications_enabled:
+        background_tasks.add_task(notify_login, user_id)
+
     log_business_event("user_login", {
-        "user_id": user.id,
+        "user_id": user_id,  # 👈 ИСПРАВЛЕНО
         "username": user.username,
         "email": user.email,
         "ip_address": request.client.host if request.client else "unknown",

@@ -1,8 +1,9 @@
 import time
 from fastapi import Request
+from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
-from typing import Callable, Optional
+from typing import Callable
 
 from .logging import log_request
 
@@ -27,7 +28,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             process_time = time.time() - start_time
             
             # Create error response
-            response = Response(
+            response = JSONResponse(
                 content={"detail": "Internal server error"},
                 status_code=500
             )
@@ -39,6 +40,3 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             raise e
 
 
-def create_request_logging_middleware():
-    """Factory function to create request logging middleware"""
-    return RequestLoggingMiddleware()
