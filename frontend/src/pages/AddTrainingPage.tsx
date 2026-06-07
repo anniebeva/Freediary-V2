@@ -117,6 +117,11 @@ const AddTrainingPage: React.FunctionComponent = () => {
         await exerciseAPI.create(exerciseData);
       }
       
+      // Отправляем цель в Яндекс Метрику
+      if (typeof window !== 'undefined' && window.ym) {
+        window.ym(109707102, 'reachGoal', 'create_training');
+      }
+      
       navigate('/trainings');
     } catch (err: any) {
       console.error('Error saving training:', err);

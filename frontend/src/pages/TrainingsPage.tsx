@@ -44,12 +44,16 @@ const TrainingsPage: React.FunctionComponent = () => {
       await trainingAPI.delete(id);
       setTrainings(trainings.filter(training => training.id !== id));
       setSuccessMessage('Тренировка успешно удалена');
-      // Скрываем сообщение через 3 секунды
+      
+      // Отправляем цель в Яндекс Метрику
+      if (window.ym) {
+        window.ym(109707102, 'reachGoal', 'delete_training');
+      }
+      
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
       setError('Не удалось удалить тренировку. Попробуйте позже.');
       console.error('Error deleting training:', err);
-      // Скрываем сообщение об ошибке через 3 секунды
       setTimeout(() => setError(null), 3000);
     }
   };

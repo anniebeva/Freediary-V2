@@ -63,6 +63,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(userData);
       setIsAuthenticated(true);
       localStorage.removeItem('sessionId');
+
+      // Отправляем цель в Яндекс Метрику
+      if (typeof window !== 'undefined' && window.ym) {
+        window.ym(109707102, 'reachGoal', 'login');
+      }
     } catch (error) {
       console.error('Login failed:', error);
       throw error;
@@ -74,6 +79,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await authAPI.register({ username, email, password });
       // После регистрации сразу входим
       await login(email, password);
+
+      // Отправляем цель в Яндекс Метрику
+      if (typeof window !== 'undefined' && window.ym) {
+        window.ym(109707102, 'reachGoal', 'register');
+      }
     } catch (error) {
       console.error('Registration failed:', error);
       throw error;
@@ -81,7 +91,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = () => {
-  // Очищаем локальное состояние
+    // Очищаем локальное состояние
     setUser(null);
     setIsAuthenticated(false);
     

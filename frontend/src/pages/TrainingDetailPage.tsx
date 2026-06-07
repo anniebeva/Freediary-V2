@@ -41,6 +41,9 @@ const TrainingDetailPage: React.FunctionComponent = () => {
     
     try {
       await trainingAPI.delete(id);
+      if (window.ym) {
+        window.ym(109707102, 'reachGoal', 'delete_training');
+      }
       // Сохраняем сообщение в localStorage перед переходом
       localStorage.setItem('deleteMessage', 'Тренировка успешно удалена');
       navigate('/trainings');
