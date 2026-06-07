@@ -18,8 +18,8 @@ const TrackPageViews: React.FC = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // Отправляем просмотр страницы в Яндекс Метрику при каждом изменении URL
     if (window.ym) {
+      console.log('🚀 Отправляю hit в Метрику:', window.location.href);
       window.ym(109707102, 'hit', window.location.href);
     }
   }, [location]);
