@@ -15,6 +15,7 @@ from app.crud.exercise import (
 from app.crud.training import is_training_owner
 from app.schemas.exercise import ExerciseCreate, ExerciseResponse, ExerciseUpdate
 from app.models.models import User
+from app.core.logging import log_business_event
 
 router = APIRouter(prefix="/exercises", tags=["exercises"])
 
@@ -60,6 +61,15 @@ def create_training_exercise(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Exercise was not created",
         )
+    
+    # Log exercise creation event
+    log_business_event("exercise_created", {
+        "user_id": user_id,
+        "training_id": exercise_data.training_id,
+        "exercise_id": exercise.id,
+        "exercise_name": exercise_data.name,
+        "session_id": x_session_id or "none"
+    })
     
     return format_exercise_response(exercise)
 
@@ -160,5 +170,12 @@ def delete_my_exercise(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Exercise not found",
         )
+    
+    # Log exercise deletion event
+    log_business_event("exercise_deleted", {
+        "user_id": user_id,
+        "exercise_id": exercise_id,
+        "session_id": x_session_id or "none"
+    })
     
     return None

@@ -18,21 +18,23 @@ from app.routes.telegram import router as telegram_router
 from app.crud.session_cleanup import cleanup_expired_sessions
 from app.core.config import settings
 from app.bot.handler import TelegramBotHandler
+from app.core.logging import setup_logging
+from app.core.middleware import RequestLoggingMiddleware
 
 import sys
 import io
 import os
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
+# Setup logging
+setup_logging()
+
 app = FastAPI()
 
-class LogCORSMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request, call_next):
-        response = await call_next(request)
-        print(f"CORS Headers: {response.headers.get('access-control-allow-origin')}")
-        return response
+# 1. Request logging middleware (первым!)
+app.add_middleware(RequestLoggingMiddleware)
 
-# 1. CORS middleware (первым!)
+# 2. CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -44,9 +46,6 @@ app.add_middleware(
     allow_headers=["Content-Type", "Authorization", "X-Session-ID"],
     expose_headers=["*"],
 )
-
-# 2. Logging middleware
-app.add_middleware(LogCORSMiddleware)
 
 # 3. Rate limiting
 limiter = Limiter(key_func=get_remote_address)
@@ -69,18 +68,21 @@ bot_handler = TelegramBotHandler()
 # Создание таблиц и запуск бота при запуске приложения
 @app.on_event("startup")
 async def on_startup():
-    print("Creating database tables...")
-    create_tables()
-    print("Database tables created successfully!")
+    from app.core.logging import get_logger
+    logger = get_logger()
     
-    print("Starting Telegram bot...")
+    logger.info("Creating database tables...")
+    create_tables()
+    logger.info("Database tables created successfully!")
+    
+    logger.info("Starting Telegram bot...")
     try:
         await asyncio.wait_for(bot_handler.start_bot(), timeout=5)
-        print("Telegram bot started!")
+        logger.info("Telegram bot started!")
     except asyncio.TimeoutError:
-        print("Telegram bot startup timeout - continuing without bot")
+        logger.warning("Telegram bot startup timeout - continuing without bot")
     except Exception as e:
-        print(f"Telegram bot not available: {e}")
+        logger.error(f"Telegram bot not available: {e}")
     
     asyncio.create_task(cleanup_sessions_task())
 
@@ -121,8 +123,11 @@ def cleanup_sessions(
     db: Session = Depends(get_db)
 ):
     def cleanup_task():
+        from app.core.logging import get_logger
+        logger = get_logger()
+        
         deleted_count = cleanup_expired_sessions(db)
-        print(f"Очищено {deleted_count} просроченных сессий")
+        logger.info(f"Очищено {deleted_count} просроченных сессий")
     
     background_tasks.add_task(cleanup_task)
     return {"message": "Задача очистки сессий запущена в фоновом режиме"}
@@ -188,15 +193,18 @@ app.openapi = custom_openapi
 async def cleanup_sessions_task():
     from app.database import get_db
     from app.crud.session_cleanup import cleanup_expired_sessions
+    from app.core.logging import get_logger
+    
+    logger = get_logger()
     
     while True:
         try:
             await asyncio.sleep(6 * 60 * 60)
             db = next(get_db())
             deleted_count = cleanup_expired_sessions(db)
-            print(f"Автоматически очищено {deleted_count} просроченных сессий")
+            logger.info(f"Автоматически очищено {deleted_count} просроченных сессий")
         except Exception as e:
-            print(f"Ошибка при автоматической очистке сессий ошибка: {e}")
+            logger.error(f"Ошибка при автоматической очистке сессий: {e}")
 
 if __name__ == "__main__":
     import uvicorn

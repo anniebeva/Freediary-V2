@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Response, Request  # 👈 добавить Request
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Response, Request
 from sqlalchemy.orm import Session
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -11,6 +11,7 @@ from app.database import get_db
 from app.schemas.user import Token, UserCreate, UserLogin, UserResponse
 from app.bot.notifications import notify_login
 from app.core.config import settings
+from app.core.logging import log_business_event
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 limiter = Limiter(key_func=get_remote_address)
@@ -36,7 +37,17 @@ def register(
         )
     
     try:
-        return create_user(db, user_data)
+        user = create_user(db, user_data)
+        
+        # Log registration event
+        log_business_event("user_registered", {
+            "user_id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "ip_address": request.client.host if request.client else "unknown"
+        })
+        
+        return user
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -74,15 +85,18 @@ def login(
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         path="/"
     )
-    
+
     telegram_id = getattr(user, 'telegram_id', None)
     notifications_enabled = getattr(user, 'telegram_notifications_enabled', False)
     
-    if telegram_id and notifications_enabled:
-        user_id = getattr(user, 'id', 0)
-        background_tasks.add_task(notify_login, user_id)
+    log_business_event("user_login", {
+        "user_id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "ip_address": request.client.host if request.client else "unknown",
+        "has_telegram_notifications": bool(telegram_id and notifications_enabled)
+    })
     
-    print(f"🔑 SECRET_KEY used for signing: {settings.SECRET_KEY[:10]}...")
     return Token(access_token=access_token)
 
 

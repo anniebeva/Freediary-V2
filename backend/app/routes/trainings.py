@@ -15,7 +15,8 @@ from app.crud.training import (
 from app.crud.exercise import get_exercises_by_training_id
 from app.schemas.training import TrainingCreate, TrainingResponse, TrainingUpdate, TrainingWithExercises
 from app.models.models import User, UserRole
-from app.bot.notifications import notify_training_created, notify_training_deleted  # 👈 добавить
+from app.bot.notifications import notify_training_created, notify_training_deleted
+from app.core.logging import log_business_event
 
 router = APIRouter(prefix="/trainings", tags=["trainings"])
 
@@ -67,6 +68,14 @@ def create_my_training(
     # Отправляем уведомление о создании тренировки
     if user_id > 0:
         background_tasks.add_task(notify_training_created, user_id, training_data.type, str(training.date))
+    
+    # Log training creation event
+    log_business_event("training_created", {
+        "user_id": user_id,
+        "training_id": training.id,
+        "training_type": training_data.type,
+        "session_id": x_session_id or "none"
+    })
     
     return format_training_response(training)
 
@@ -152,8 +161,14 @@ def delete_my_training(
         training_type = getattr(training, 'type', 'Unknown')
         training_date = getattr(training, 'date', '')
         background_tasks.add_task(notify_training_deleted, user_id, training_type, str(training_date))
-    else:
-        print(f"⚠️ Уведомление НЕ отправлено: user_id={user_id}, training={training is not None}")
+    
+    # Log training deletion event
+    log_business_event("training_deleted", {
+        "user_id": user_id,
+        "training_id": training_id,
+        "training_type": getattr(training, 'type', 'unknown') if training else 'unknown',
+        "session_id": x_session_id or "none"
+    })
     
     if not delete_training(db, training_id, user_id, x_session_id):
         raise HTTPException(status_code=404, detail="Training not found")
