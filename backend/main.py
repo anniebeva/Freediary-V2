@@ -21,6 +21,7 @@ from app.bot.handler import TelegramBotHandler
 
 import sys
 import io
+import os
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 app = FastAPI()
@@ -108,8 +109,11 @@ def read_root():
     return {"message": "Welcome to FreeDiary API"}
 
 @app.get("/health")
+@app.head("/health")
 def health_check():
-    return {"status": "healthy", "database": "SQLite"}
+    db_url = os.getenv("DATABASE_URL", "sqlite:///./freediary.db")
+    db_type = "PostgreSQL" if "postgresql" in db_url else "SQLite"
+    return {"status": "healthy", "database": db_type}
 
 @app.post("/cleanup-sessions")
 def cleanup_sessions(
@@ -123,9 +127,14 @@ def cleanup_sessions(
     background_tasks.add_task(cleanup_task)
     return {"message": "Задача очистки сессий запущена в фоновом режиме"}
 
+import os
+
 @app.get("/db-info")
 def get_database_info(db: Session = Depends(get_db)):
     from app.models.models import User, Training, Exercise, SessionTracking, SessionTraining, SessionExercise
+    
+    db_url = os.getenv("DATABASE_URL", "sqlite:///./freediary.db")
+    db_type = "PostgreSQL" if "postgresql" in db_url else "SQLite"
     
     user_count = db.query(User).count()
     training_count = db.query(Training).count()
@@ -135,7 +144,7 @@ def get_database_info(db: Session = Depends(get_db)):
     session_exercise_count = db.query(SessionExercise).count()
     
     return {
-        "database": "SQLite",
+        "database": db_type,
         "tables": {
             "users": user_count,
             "trainings": training_count,
