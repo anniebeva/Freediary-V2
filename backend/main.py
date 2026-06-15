@@ -36,7 +36,7 @@ app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://freediary-ai-version.vercel.app",
+        "https://freediary.vercel.app/",
         "http://localhost:3000",
     ],
     allow_credentials=True,
@@ -97,7 +97,7 @@ app.include_router(telegram_router)
 @app.options("/{rest_of_path:path}")
 async def preflight_handler(request: Request):
     response = Response()
-    response.headers["Access-Control-Allow-Origin"] = "https://freediary-ai-version.vercel.app"
+    response.headers["Access-Control-Allow-Origin"] = "https://freediary.vercel.app/"
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
     response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Session-ID"
     response.headers["Access-Control-Allow-Credentials"] = "true"
