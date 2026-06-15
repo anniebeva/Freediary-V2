@@ -6,90 +6,86 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-4.9.5-blue?logo=typescript)
 ![SQLite](https://img.shields.io/badge/SQLite-3.42.0-lightgrey?logo=sqlite)
 
-**FreeDiary** — это полноценное веб-приложение для записи тренировок, анализа прогресса и управления упражнениями. Проект поддерживает гостевые сессии и JWT-авторизацию, имеет ролевую модель (user/admin) и создан с активным использованием AI в процессе разработки.
+**FreeDiary** is a full-featured web application for logging workouts, analyzing progress, and managing exercises. The project supports guest sessions and JWT authentication, has a role-based model (user/admin), and was developed with heavy AI assistance.
 
-## 📋 Описание проекта
 
-Fullstack веб-приложение на FastAPI (бэкенд) + React (фронтенд) + SQLite (база данных). Позволяет пользователям вести дневник тренировок, добавлять упражнения, просматривать статистику и анализировать прогресс.
 
-**Основные возможности:**
-- ✅ Гостевые сессии (без регистрации)
-- ✅ JWT-авторизация для зарегистрированных пользователей
-- ✅ Ролевая модель: user (только свои данные) и admin (полный доступ)
-- ✅ Три типа тренировок: Pool (бассейн), Depth (глубина), Gym (тренажерный зал)
-- ✅ Управление упражнениями внутри тренировок
-- ✅ Статистика и аналитика тренировок
-- ✅ Современный интерфейс с Tailwind CSS
+## 📋 Project Description
 
-## 🛠️ Технологии
+Full‑stack web application using FastAPI (backend) + React (frontend) + SQLite (database). It allows users to keep a workout diary, add exercises, view statistics, and analyze progress.
 
-### Бэкенд
-- **Python 3.9+** — основной язык
-- **FastAPI 0.95.1** — современный веб-фреймворк
-- **SQLAlchemy 1.4.46** — ORM для работы с БД
-- **SQLite** — легкая база данных
-- **Argon2-cffi** — безопасное хеширование паролей
-- **Python-JOSE** — JWT токены
+***Key Features***
+✅ Guest sessions (no registration required)
+✅ JWT authentication for registered users
+✅ Role model: user (own data only) and admin (full access)
+✅ Three workout types: Pool, Depth, Gym
+✅ Manage exercises inside workouts
+✅ Workout statistics and analytics
+✅ Modern UI with Tailwind CSS
 
-### Фронтенд
-- **React 19.2.6** — библиотека для UI
-- **TypeScript 4.9.5** — типизация
-- **React Router DOM 7.15.1** — маршрутизация
-- **Tailwind CSS 3.4.0** — стилизация
-- **Create React App** — сборка проекта
+## 🛠️ Technologies
 
-### ИИ-инструменты в разработке
-- **Claude 3.5 Sonnet** — основная модель для генерации архитектуры и сложной логики
-- **Claude 3.5 Haiku** — быстрые правки, рефакторинг кода
-- **DeepSeek-V3** — оптимизация CRUD операций и работы с БД
-- **GPT-4o** — помощь в отладке и написании запросов
-- **OpenRouter** — универсальный доступ к моделям
-- **Cline (VSCode extension)** — агентная среда разработки
+## 🛠️ Technologies
 
-## 🚀 Функциональность
+### Backend
+- **Python 3.9+** – primary language
+- **FastAPI 0.95.1** – modern web framework
+- **SQLAlchemy 1.4.46** – ORM for database work
+- **SQLite** – lightweight database
+- **Argon2-cffi** – secure password hashing
+- **Python-JOSE** – JWT tokens
 
-### 👥 Роли пользователей
-- **Пользователь (user)** — может создавать, редактировать и просматривать только свои тренировки
-- **Администратор (admin)** — имеет полный доступ к данным всех пользователей
+### Frontend
+- **React 19.2.6** – UI library
+- **TypeScript 4.9.5** – type safety
+- **React Router DOM 7.15.1** – routing
+- **Tailwind CSS 3.4.0** – styling
+- **Create React App** – build tool
 
-### 📊 Типы тренировок
-1. **Pool** — тренировки в бассейне
-2. **Depth** — тренировки на глубине
-3. **Gym** — тренировки в тренажерном зале
-4. **Other** — другие виды тренировок
+## 🚀 Functionality
 
-### 🏋️‍♂️ Управление упражнениями
-- Добавление упражнений к тренировкам
-- Заметки и комментарии для каждого упражнения
-- Группировка упражнений по типам тренировок
+### 👥 User Roles
+- **User** – can create, edit, and view only their own workouts
+- **Admin** – full access to all users’ data
 
-### 📈 Статистика
-- Анализ прогресса по времени
-- Сравнение разных типов тренировок
-- Графики и диаграммы эффективности
+### 📊 Workout Types
+1. **Pool** – swimming pool workouts
+2. **Depth** – depth/underwater workouts
+3. **Gym** – gym workouts
+4. **Other** – other types
 
-## 📦 Установка и запуск
+### 🏋️‍♂️ Exercise Management
+- Add exercises to workouts
+- Notes and comments for each exercise
+- Group exercises by workout type
 
-### Бэкенд (FastAPI)
+### 📈 Statistics
+- Progress analysis over time
+- Compare different workout types
+- Efficiency graphs and charts
 
-1. **Установка зависимостей**
-```bash
-cd backend
-pip install -r requirements.txt
+## 📦 Installation & Running
+
+### Backend (FastAPI)
+
+1. **Install dependencies**
+   ```bash
+   cd backend
+   pip install -r requirements.txt
 ```
 
-2. **Настройка переменных окружения**
+2. **Set up environment variables**
 ```bash
 cp .env.example .env
-# Настройте параметры в .env файле
+# Edit parameters in .env file
 ```
 
-3. **Запуск сервера**
+3. **Run server**
 ```bash
 uvicorn main:app --reload
 ```
 
-**Переменные окружения (.env):**
+**Environment variables (.env):**
 ```
 DATABASE_URL=sqlite:///./freediary.db
 SECRET_KEY=your-secret-key-here
@@ -99,127 +95,43 @@ DEBUG=True
 CORS_ORIGINS=http://localhost:3000
 ```
 
-### Фронтенд (React)
+### Frontend (React)
 
-1. **Установка зависимостей**
+1. **Install dependencies**
 ```bash
 cd frontend
 npm install
 ```
 
-2. **Запуск разработки**
+2. **Start development server**
 ```bash
 npm start
 ```
 
-3. **Сборка для production**
+3. **Build for production**
 ```bash
 npm run build
 ```
 
-## 🔌 Примеры API запросов
 
-### Авторизация
-```bash
-# Регистрация пользователя
-POST /api/auth/register
-{
-  "username": "john",
-  "email": "john@example.com",
-  "password": "password123"
-}
 
-# Авторизация
-POST /api/auth/login
-{
-  "username": "john",
-  "password": "password123"
-}
+## 🗄️ Database Architecture
 
-# Гостевой доступ (без регистрации)
-POST /api/auth/guest
-```
+Main Tables:
+- **users** – id, username, email, password, role
+- **trainings** – id, user_id, type, date, difficulty, notes
+- **exercises** – id, training_id, name, notes
+- **sessions** – session_id, created_at, expires_at
+- **session_trainings** – guest session workouts
+- **session_exercises** – guest session exercises
 
-### Тренировки
-```bash
-# Создание тренировки
-POST /api/trainings
-{
-  "type": "Gym",
-  "date": "2024-01-15",
-  "difficulty": 3,
-  "notes": "Силовая тренировка"
-}
+**Relationships:**
+- User → Training (one‑to‑many)
+- Training → Exercise (one‑to‑many)
+- Session → SessionTraining (one‑to‑many)
+- SessionTraining → SessionExercise (one‑to‑many)
 
-# Получение всех тренировок пользователя
-GET /api/trainings
-
-# Получение конкретной тренировки
-GET /api/trainings/{id}
-
-# Обновление тренировки
-PUT /api/trainings/{id}
-{
-  "difficulty": 4,
-  "notes": "Усиленная тренировка"
-}
-
-# Удаление тренировки
-DELETE /api/trainings/{id}
-```
-
-### Упражнения
-```bash
-# Добавление упражнения к тренировке
-POST /api/exercises
-{
-  "training_id": 1,
-  "name": "Приседания",
-  "notes": "3 подхода по 10 повторений"
-}
-
-# Получение упражнений тренировки
-GET /api/exercises/training/{training_id}
-```
-
-## 🗄️ Архитектура базы данных
-
-Основные таблицы:
-- **users** — пользователи (id, username, email, password, role)
-- **trainings** — тренировки (id, user_id, type, date, difficulty, notes)
-- **exercises** — упражнения (id, training_id, name, notes)
-- **sessions** — гостевые сессии (session_id, created_at, expires_at)
-- **session_trainings** — тренировки гостевых сессий
-- **session_exercises** — упражнения гостевых сессий
-
-**Связи:**
-- User → Training (один к многим)
-- Training → Exercise (один к многим)
-- Session → SessionTraining (один к многим)
-- SessionTraining → SessionExercise (один к многим)
-
-## 🤖 Как ИИ помогал в разработке
-
-Проект создан при активном использовании AI-инструментов. Код генерировался итеративно, с отладкой через Cline и другими моделями:
-
-1. **Архитектура проекта** — Claude 3.5 Sonnet разработал структуру бэкенда и фронтенда, предложил оптимальную схему БД
-2. **CRUD операции** — DeepSeek-V3 оптимизировал работу с базой данных, улучшил производительность запросов
-3. **Авторизация и безопасность** — GPT-4o помог исправить проблемы с CORS, bcrypt (72 bytes) и JWT токенами
-4. **Ролевая модель** — Claude 3.5 Haiku быстро реализовал систему ролей user/admin
-5. **Миграция на SQLite** — AI-инструменты помогли перейти с PostgreSQL на SQLite для простоты разработки
-6. **Форматирование ответов** — модели улучшили структуру API ответов и обработку ошибок
-7. **Рефакторинг кода** — Claude 3.5 Haiku выполнял быстрые правки и оптимизацию существующего кода
-
-## 📞 Контакты и финальный комментарий
-
-Проект демонстрирует возможности современной разработки с использованием AI-инструментов. Все компоненты — от архитектуры до реализации — созданы с помощью AI моделей, что позволило значительно сократить время разработки и повысить качество кода.
-
-**Ключевые особенности разработки:**
-- Итеративный подход с постоянной отладкой через Cline
-- Использование разных моделей для разных задач (архитектура, оптимизация, рефакторинг)
-- Акцент на безопасности и производительности
-- Современный UI с Tailwind CSS
 
 ---
 
-🚀 **FreeDiary** — ваш персональный помощник в мире тренировок и спортивного прогресса!
+🚀 **FreeDiary** – your personal companion in the world of workouts and athletic progress!
