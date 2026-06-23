@@ -36,7 +36,7 @@ app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://freediary.vercel.app/",
+        "https://freediary.vercel.app",
         "http://localhost:3000",
     ],
     allow_credentials=True,
