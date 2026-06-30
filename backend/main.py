@@ -24,15 +24,11 @@ import io
 import os
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-# Setup logging
 setup_logging()
 
 app = FastAPI()
 
-# 1. Request logging middleware (первым!)
 app.add_middleware(RequestLoggingMiddleware)
-
-# 2. CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -45,13 +41,11 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
-# 3. Rate limiting
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
 app.add_middleware(SlowAPIMiddleware)
 
-# Регистрируем глобальный обработчик для ошибок валидации
 def validation_exception_handler(request, exc):
     return JSONResponse(
         status_code=400,
@@ -60,10 +54,8 @@ def validation_exception_handler(request, exc):
 
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
-# Создаём экземпляр бота
 bot_handler = TelegramBotHandler()
 
-# Создание таблиц и запуск бота при запуске приложения
 @app.on_event("startup")
 async def on_startup():
     from app.core.logging import get_logger
@@ -93,7 +85,6 @@ app.include_router(trainings_router)
 app.include_router(exercises_router)
 app.include_router(telegram_router)
 
-# 4. Preflight handler для CORS
 @app.options("/{rest_of_path:path}")
 async def preflight_handler(request: Request):
     response = Response()
@@ -103,7 +94,6 @@ async def preflight_handler(request: Request):
     response.headers["Access-Control-Allow-Credentials"] = "true"
     return response
 
-# 5. Обычные эндпоинты
 @app.get("/")
 def read_root():
     return {"message": "Welcome to FreeDiary API"}
@@ -158,7 +148,6 @@ def get_database_info(db: Session = Depends(get_db)):
         }
     }
 
-# Настройка Swagger для Bearer авторизации
 from fastapi.openapi.utils import get_openapi
 
 def custom_openapi():

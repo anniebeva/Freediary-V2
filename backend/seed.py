@@ -9,7 +9,6 @@ import os
 from datetime import date, datetime, timedelta
 from sqlalchemy.orm import Session
 
-# Добавляем родительскую директорию в путь для импорта
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from app.database import SessionLocal, engine, create_tables
@@ -25,11 +24,8 @@ def create_test_data() -> None:
         print("Создание таблиц...")
         create_tables()
         print("Таблицы созданы успешно!")
-        
-        # Создаем тестовых пользователей
         print("Создание тестовых пользователей...")
         
-        # Пользователь 1
         user1 = User(
             username="testuser1",
             email="user1@example.com",
@@ -38,7 +34,6 @@ def create_test_data() -> None:
         )
         db.add(user1)
         
-        # Пользователь 2
         user2 = User(
             username="testuser2",
             email="user2@example.com",
@@ -47,7 +42,6 @@ def create_test_data() -> None:
         )
         db.add(user2)
         
-        # Администратор
         admin_user = User(
             username="admin",
             email="admin@example.com",
@@ -62,11 +56,9 @@ def create_test_data() -> None:
         db.refresh(admin_user)
         
         print(f"Созданы пользователи: {user1.username} (ID: {user1.id}, роль: {user1.role}), {user2.username} (ID: {user2.id}, роль: {user2.role}), {admin_user.username} (ID: {admin_user.id}, роль: {admin_user.role})")
-        
-        # Создаем тренировки для пользователя 1
+
         print("Создание тренировок для пользователя 1...")
-        
-        # Тренировка 1: Бассейн
+
         training1 = Training(
             user_id=user1.id,
             type="Pool",
@@ -76,8 +68,7 @@ def create_test_data() -> None:
             pool_training={"poolSize": 25, "laps": 20, "style": "вольный"}
         )
         db.add(training1)
-        
-        # Тренировка 2: Глубина
+
         training2 = Training(
             user_id=user1.id,
             type="Depth",
@@ -93,11 +84,9 @@ def create_test_data() -> None:
         db.refresh(training2)
         
         print(f"Созданы тренировки: ID {training1.id} ({training1.type}), ID {training2.id} ({training2.type})")
-        
-        # Создаем упражнения для тренировок
+
         print("Создание упражнений...")
-        
-        # Упражнения для тренировки 1
+
         exercise1 = Exercise(
             training_id=training1.id,
             name="Разминка",
@@ -111,8 +100,7 @@ def create_test_data() -> None:
             notes="20 кругов по 25 метров"
         )
         db.add(exercise2)
-        
-        # Упражнения для тренировки 2
+
         exercise3 = Exercise(
             training_id=training2.id,
             name="Разминка на суше",
@@ -131,7 +119,6 @@ def create_test_data() -> None:
         
         print(f"Создано 4 упражнения для тренировок")
         
-        # Создаем тестовую сессию для гостевого пользователя
         print("Создание тестовой сессии для гостя...")
         
         session = SessionTracking(
@@ -142,7 +129,6 @@ def create_test_data() -> None:
         db.commit()
         db.refresh(session)
         
-        # Создаем сессионные тренировки
         session_training1 = SessionTraining(
             session_id=session.session_id,
             type="Gym",
@@ -156,7 +142,6 @@ def create_test_data() -> None:
         db.commit()
         db.refresh(session_training1)
         
-        # Создаем сессионные упражнения
         session_exercise1 = SessionExercise(
             session_id=session.session_id,
             training_id=session_training1.id,

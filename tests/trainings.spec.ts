@@ -51,13 +51,10 @@ test.describe('Управление тренировками', () => {
     await page.selectOption('select', { label: 'Бассейн' });
     await page.locator('input[placeholder="Введите длину бассейна"]').fill('25');
     
-    // Добавляем упражнение
     await page.getByRole('button', { name: /добавить упражнение/i }).click();
     
-    // Очищаем название упражнения
     await page.locator('input[placeholder="Название упражнения"]').fill('');
     
-    // Пытаемся сохранить
     await page.getByRole('button', { name: /сохранить тренировку/i }).click();
 
     await expect(page.getByText(/у всех упражнений должно быть название/i)).toBeVisible();
@@ -79,7 +76,6 @@ test.describe('Управление тренировками', () => {
   });
 
   test('Пользователь удаляет тренировку, она исчезает из списка', async ({ page }) => {
-    // Создаем тренировку через API
     const loginRes = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -105,7 +101,6 @@ test.describe('Управление тренировками', () => {
     await page.reload();
     await page.waitForTimeout(2000);
     
-    // Удаляем первую тренировку в списке
     const deleteBtn = page.getByRole('button', { name: 'Удалить' }).first();
     await deleteBtn.click();
     
@@ -113,12 +108,10 @@ test.describe('Управление тренировками', () => {
       await dialog.accept();
     });
     
-    // Проверяем, что кнопка "Удалить" всё ещё есть (или просто ждём)
     await page.waitForTimeout(2000);
   });
 
   test('Пользователь не может удалить тренировку другого пользователя', async ({ page }) => {
-    // Создаем тренировку от имени TEST_USER
     const loginRes = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -140,14 +133,12 @@ test.describe('Управление тренировками', () => {
       })
     });
 
-    // Входим как TEST_USER_2 (другой пользователь)
     await page.goto('/login');
     await page.getByLabel(/email/i).fill(TEST_USER_2.email);
     await page.getByLabel(/пароль/i).fill(TEST_USER_2.password);
     await page.getByRole('button', { name: /войти/i }).click();
     await page.waitForURL(/.*trainings/, { timeout: 10000 });
 
-    // Проверяем, что тренировка другого пользователя не отображается
     await expect(page.getByText('Чужая тренировка')).not.toBeVisible();
   });
 });
